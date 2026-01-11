@@ -14,6 +14,48 @@ app.use(cors({
 }));
 
 
+function isValidEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+}
+
+
+function isValidCard(card) {
+  const regex = /^\d{12}$/;
+  return regex.test(card);
+}
+
+
+app.post("/api/customers", (req, res) => {
+  const { name, email, creditCardNumber } = req.body;
+
+  if (!name || !email || !creditCardNumber) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: "Invalid email address" });
+  }
+
+  if (!isValidCard(creditCardNumber)) {
+    return res.status(400).json({ error: "Invalid credit card number" });
+  }
+
+  const sql =
+    "INSERT INTO customer (name, email, creditCardNumber) VALUES (?, ?, ?)";
+
+  db.run(sql, [name, email, creditCardNumber], function (err) {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    res.status(201).json({
+      customerId: this.lastID,
+      message: "Customer registered successfully",
+    });
+  });
+});
+
 
 // Start server
 app.listen(HTTP_PORT, () => {
